@@ -55,12 +55,14 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+extern ADC_HandleTypeDef hadc;
 
 /* USER CODE END 0 */
 
@@ -91,7 +93,7 @@ int main(void)
   uint8_t str[50];
   //uint8_t t_sens_spi;
   //uint16_t t_sens_adc;
-  uint32_t t_x_adc;
+  //uint16_t t_x_adc;
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -107,19 +109,17 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  HAL_ADC_Start(&hadc);
+
+
   HAL_UART_Transmit(&huart1, (uint8_t*)"UART status OK", sizeof("UART status OK") , 1000);
+
 
   while (1)
   {
-	  t_x_adc = HAL_ADC_GetValue(&hadc); // lettura sensore temperatura analogico
-	  //HAL_ADC_Stop(&hadc);
-	  memset(str,0,sizeof(str));
-	  //x = 20.3;
-	  //uint16_t temp_c = 20;//((uint32_t)adc * 340u + 2048u) >> 12;
-	  sprintf((char*)str, "temp: %ld \n",t_x_adc);
-	  HAL_UART_Transmit(&huart1, (uint8_t*)&str, strlen((char*)str), 1000);
+
+	  HAL_GPIO_TogglePin(LED_G_GPIO_Port, LED_G_Pin);
 	  HAL_Delay(500);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
