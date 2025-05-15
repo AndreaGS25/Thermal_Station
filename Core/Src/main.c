@@ -90,10 +90,7 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-  uint8_t str[50];
-  //uint8_t t_sens_spi;
-  //uint16_t t_sens_adc;
-  //uint16_t t_x_adc;
+
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -111,7 +108,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 
 
-  HAL_UART_Transmit(&huart1, (uint8_t*)"UART status OK", sizeof("UART status OK") , 1000);
 
 
   while (1)
