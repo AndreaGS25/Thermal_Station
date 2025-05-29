@@ -60,8 +60,8 @@ all: main-build
 main-build: Thermal_Station.elf secondary-outputs
 
 # Tool invocations
-Thermal_Station.elf Thermal_Station.map: $(OBJS) $(USER_OBJS) C:\Users\andre\Desktop\E2A\ S2\Progeto_di_semestre\3_Design\SW\Thermal_Station\STM32F042K6TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Thermal_Station.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0 -T"C:\Users\andre\Desktop\E2A S2\Progeto_di_semestre\3_Design\SW\Thermal_Station\STM32F042K6TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Thermal_Station.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Thermal_Station.elf Thermal_Station.map: $(OBJS) $(USER_OBJS) C:\Users\andre\Desktop\E2A\ S2\Progeto_di_semestre\3_Design\FW\Thermal_Station\STM32F042K6TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Thermal_Station.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0 -T"C:\Users\andre\Desktop\E2A S2\Progeto_di_semestre\3_Design\FW\Thermal_Station\STM32F042K6TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Thermal_Station.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

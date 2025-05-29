@@ -1,0 +1,6 @@
+../Core/Src/uart_ble.c:47:6:uart_ble_init	1
+../Core/Src/uart_ble.c:56:6:uart_ble_set_boutrate	1
+../Core/Src/uart_ble.c:66:6:uart_ble_transmit	2
+../Core/Src/uart_ble.c:80:6:uart_ble_pop_cmd	2
+../Core/Src/uart_ble.c:96:6:uart_ble_RxCpltCallback	5
+../Core/Src/uart_ble.c:117:6:uart_ble_TxCpltCallback	2

@@ -1,0 +1,2 @@
+../Core/Src/tsens.c:43:6:analog_tsens_init	1
+../Core/Src/tsens.c:57:10:get_analog_tsens	1

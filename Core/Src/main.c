@@ -13,28 +13,38 @@
   * in the root directory of this software component.
   * If no LICENSE file comes with this software, it is provided AS-IS.
   *
+  * implementare sensore temperatura spi
+  * implementare pwm to sin
+  * implementare gpio expander
+  * implementare sdcard
   ******************************************************************************
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
+#include "dma.h"
 #include "i2c.h"
 #include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "usb.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "uart_ble.h"
+#include "tsens.h"
 #include <string.h>
 #include <stdio.h>
-//#include <stdlib.h>
+#include <stdlib.h>
+#include <stdbool.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+extern TIM_HandleTypeDef htim16;
+extern TIM_HandleTypeDef htim2;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -50,19 +60,59 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint32_t value_adc;
+uint32_t value_dac=0;
+extern uint8_t tsens_flag_analizer;
+uint8_t msgbuffer [25] = {0};
+#define maxperiod 100
+#define minperiod 1
+uint32_t period_t2 = 1;
+bool pwm_flag = true;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-
 /* USER CODE BEGIN PFP */
-
+bool cmd_command_analizing(uint8_t *cmd);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 extern ADC_HandleTypeDef hadc;
+extern UART_HandleTypeDef huart1;
+extern SPI_HandleTypeDef hspi1;
+extern TIM_HandleTypeDef htim2;
+
+void pwm_for_sin(){
+	if (pwm_flag == true){
+		if (period_t2 < maxperiod){
+			period_t2 ++;
+		}else{
+			period_t2 --;
+			pwm_flag = false;
+		}
+		__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, period_t2);
+	}else{
+		if (period_t2 > minperiod){
+			period_t2 --;
+		}else{
+			period_t2 ++;
+			pwm_flag = true;
+		}
+		__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, period_t2);
+	}
+	/*
+	if (value == 0){
+		HAL_TIM_Base_Stop_IT(&htim2);
+		HAL_TIM_OC_Stop_IT(&htim2, TIM_CHANNEL_1);
+	}
+	else if(value<=100){
+		HAL_TIM_Base_Start_IT(&htim2);
+		HAL_TIM_OC_Start_IT(&htim2, TIM_CHANNEL_1);
+		__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, value-1);
+		led1_brightness = value;
+	}*/
+}
 
 /* USER CODE END 0 */
 
@@ -95,26 +145,37 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_ADC_Init();
   MX_I2C1_Init();
   MX_SPI1_Init();
   MX_USART1_UART_Init();
   MX_USB_PCD_Init();
+  MX_TIM16_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
-
-
+  uint8_t command[100];
+  uart_ble_init(&huart1);
+  uart_ble_transmit((uint8_t*)"status ok");
+  analog_tsens_init(&hadc, ADC_CHANNEL_0);
+  HAL_TIM_Base_Start_IT(&htim16);
+  HAL_TIM_Base_Start_IT(&htim2);
+  HAL_TIM_PWM_Start_IT(&htim2, TIM_CHANNEL_2);
 
   while (1)
   {
+	  if (tsens_flag_analizer == 1){
 
-	  HAL_GPIO_TogglePin(LED_G_GPIO_Port, LED_G_Pin);
-	  HAL_Delay(500);
+	  }
+	  if (uart_ble_pop_cmd(command) == true){
+		  cmd_command_analizing(command);
+	  }
 
     /* USER CODE END WHILE */
 
@@ -177,6 +238,51 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+bool cmd_command_analizing(uint8_t *cmd){
+	if (strncmp((char*)cmd, (char*)"redLED : on", strlen((char*)cmd)) == 0){
+		HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_SET);
+		return true;
+	}else if (strncmp((char*)cmd, (char*)"greenLED : on", strlen((char*)cmd)) == 0){
+		HAL_GPIO_WritePin(LED_G_GPIO_Port, LED_G_Pin, GPIO_PIN_SET);
+		return true;
+	}else if (strncmp((char*)cmd, (char*)"yellowLED : on", strlen((char*)cmd)) == 0){
+		HAL_GPIO_WritePin(LED_Y_GPIO_Port, LED_Y_Pin, GPIO_PIN_SET);
+		return true;
+	}else if (strncmp((char*)cmd, (char*)"redLED : off", strlen((char*)cmd)) == 0){
+		HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_RESET);
+		return true;
+	}else if (strncmp((char*)cmd, (char*)"greenLED : off", strlen((char*)cmd)) == 0){
+		HAL_GPIO_WritePin(LED_G_GPIO_Port, LED_G_Pin, GPIO_PIN_RESET);
+		return true;
+	}else if (strncmp((char*)cmd, (char*)"yellowLED : off", strlen((char*)cmd)) == 0){
+		HAL_GPIO_WritePin(LED_Y_GPIO_Port, LED_Y_Pin, GPIO_PIN_RESET);
+		return true;
+	}else if (strncmp((char*)cmd, (char*)"LEDs toggled", strlen((char*)cmd)) == 0){
+		HAL_GPIO_TogglePin(LED_R_GPIO_Port, LED_R_Pin);
+		HAL_GPIO_TogglePin(LED_G_GPIO_Port, LED_G_Pin);
+		HAL_GPIO_TogglePin(LED_Y_GPIO_Port, LED_Y_Pin);
+		return true;
+	}else if (strncmp((char*)cmd, (char*)"AnalogSensor Temp value =", strlen((char*)cmd)) == 0){
+		uint32_t temp = get_analog_tsens();
+		sprintf((char*)&msgbuffer, "T: %u,%u °C\n", (unsigned int)(temp/100), (unsigned int)(temp%100));
+
+		//sprintf((char*)&msgbuffer, "T: %u,%u °C\n", (unsigned int)(temp/100), (unsigned int)(temp%100));
+		uart_ble_transmit((uint8_t*)msgbuffer);
+		//HAL_Delay(100);
+		//uart_ble_transmit((uint8_t*)"ma porca la puttana ladra");
+
+	}else if (strncmp((char*)cmd, (char*)"DigitalSensor Temp value =", strlen((char*)cmd)) == 0){
+		uart_ble_transmit((uint8_t*)"digital ok");
+		return true;
+	}else if (strncmp((char*)cmd, (char*)"TBD =", strlen((char*)cmd)) == 0){
+		uart_ble_transmit((uint8_t*)"tbd ok");
+		return true;
+	}else {
+		return false;
+	}
+	return false;
+}
 
 /* USER CODE END 4 */
 
